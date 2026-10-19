@@ -1,0 +1,2 @@
+# The dataset is ~493 MB; GitHub rejects normal files over 100 MB, so it is tracked with Git LFS.
+data/*.csv filter=lfs diff=lfs merge=lfs -text

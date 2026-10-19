@@ -1,0 +1,321 @@
+
+==========================================================================================
+1. LOADING DATA
+==========================================================================================
+  file: PS_20174392719_1491204439457_log.csv
+  loaded 6,362,620 rows x 9 columns
+
+==========================================================================================
+2. DATA PREPROCESSING & FEATURE ENGINEERING
+==========================================================================================
+  missing values            : 0
+  exact duplicate rows      : 543 (kept: the unique account IDs were dropped, so identical-looking rows can be genuinely different transactions)
+  negative monetary values  : 0
+
+  Fraud by transaction type (raw data):
+isFraud         0     1
+type                   
+CASH_IN   1399284     0
+CASH_OUT  2233384  4116
+DEBIT       41432     0
+PAYMENT   2151495     0
+TRANSFER   528812  4097
+
+  kept only ['TRANSFER', 'CASH_OUT'] -> 2,770,409 rows (43.5% of the raw data)
+
+  engineered features       : ['amount', 'oldbalanceOrg', 'newbalanceOrig', 'oldbalanceDest', 'newbalanceDest', 'errorBalanceOrig', 'errorBalanceDest', 'hour_of_day', 'type_TRANSFER', 'orig_emptied', 'dest_zero']
+  final dataset             : 2,770,409 rows x 12 columns
+  fraud transactions        : 8,213 (0.296%)
+
+==========================================================================================
+3. EXPLORATORY DATA ANALYSIS
+==========================================================================================
+
+  Dataset overview (after preprocessing):
+      amount  oldbalanceOrg  newbalanceOrig  oldbalanceDest  newbalanceDest  errorBalanceOrig  errorBalanceDest  hour_of_day  type_TRANSFER  orig_emptied  dest_zero  isFraud
+0     181.00          181.0             0.0             0.0            0.00              0.00             181.0            1              1             1          1        1
+1     181.00          181.0             0.0         21182.0            0.00              0.00           21363.0            1              0             1          0        1
+2  229133.94        15325.0             0.0          5083.0        51513.44         213808.94          182703.5            1              0             1          0        0
+3  215310.30          705.0             0.0         22425.0            0.00         214605.30          237735.3            1              1             1          0        0
+4  311685.89        10835.0             0.0          6267.0      2719172.89         300850.89        -2401220.0            1              1             1          0        0
+
+  Descriptive statistics:
+                      count          mean           std          min        25%        50%         75%           max
+amount            2770409.0  3.175361e+05  8.877897e+05         0.00   82973.54  171260.93   306791.18  9.244552e+07
+oldbalanceOrg     2770409.0  4.764308e+04  2.513251e+05         0.00       0.00     303.96    30997.00  5.958504e+07
+newbalanceOrig    2770409.0  1.609190e+04  1.512558e+05         0.00       0.00       0.00        0.00  4.958504e+07
+oldbalanceDest    2770409.0  1.703551e+06  4.225550e+06         0.00  128073.45  555709.97  1735900.15  3.560159e+08
+newbalanceDest    2770409.0  2.049734e+06  4.676990e+06         0.00  327289.08  828053.88  2122198.45  3.561793e+08
+errorBalanceOrig  2770409.0  2.859850e+05  8.753230e+05        -0.01   51853.10  143597.06   279891.16  9.244552e+07
+errorBalanceDest  2770409.0 -2.864713e+04  5.934794e+05 -75885725.63       0.00       0.00        0.00  1.000000e+07
+hour_of_day       2770409.0  1.530878e+01  4.004595e+00         0.00      12.00      16.00       19.00  2.300000e+01
+type_TRANSFER     2770409.0  1.923575e-01  3.941525e-01         0.00       0.00       0.00        0.00  1.000000e+00
+orig_emptied      2770409.0  4.288443e-01  4.949111e-01         0.00       0.00       0.00        1.00  1.000000e+00
+dest_zero         2770409.0  2.087056e-03  4.563662e-02         0.00       0.00       0.00        0.00  1.000000e+00
+isFraud           2770409.0  2.964544e-03  5.436687e-02         0.00       0.00       0.00        0.00  1.000000e+00
+
+  Class distribution:
+    legitimate (0): 2,762,196
+    fraud      (1): 8,213
+    imbalance ratio: 1 fraud per 336 legitimate
+
+  Rule-based flag (isFlaggedFraud) vs. real fraud (raw data):
+isFraud               0     1
+isFlaggedFraud               
+0               6354407  8197
+1                     0    16
+
+  Mean of each feature by class:
+isFraud                      0             1
+amount            3.141155e+05  1.467967e+06
+oldbalanceOrg     4.287969e+04  1.649668e+06
+newbalanceOrig    1.556770e+04  1.923926e+05
+oldbalanceDest    1.706998e+06  5.442496e+05
+newbalanceDest    2.052024e+06  1.279708e+06
+errorBalanceOrig  2.868035e+05  1.069233e+04
+errorBalanceDest -3.091033e+04  7.325093e+05
+hour_of_day       1.531997e+01  1.154645e+01
+type_TRANSFER     1.914462e-01  4.988433e-01
+orig_emptied      4.272188e-01  9.755266e-01
+dest_zero         6.176245e-04  4.962864e-01
+  saved figure -> eda_01_class_distribution.png
+  saved figure -> eda_02_fraud_by_type.png
+  saved figure -> eda_03_amount_distribution.png
+  saved figure -> eda_04_balance_errors.png
+  saved figure -> eda_05_fraud_over_time.png
+  saved figure -> eda_06_fraud_rate_by_hour.png
+  saved figure -> eda_07_correlation_heatmap.png
+
+  Correlation of each feature with isFraud:
+dest_zero           0.5911
+oldbalanceOrg       0.3459
+errorBalanceDest    0.0719
+newbalanceOrig      0.0700
+amount              0.0687
+orig_emptied        0.0608
+hour_of_day        -0.0525
+type_TRANSFER       0.0432
+errorBalanceOrig   -0.0170
+oldbalanceDest     -0.0157
+newbalanceDest     -0.0100
+
+==========================================================================================
+4. TRAIN / VALIDATION / TEST SPLIT (stratified)
+==========================================================================================
+  train      : 1,939,286 rows | frauds: 5,749 (0.296%)
+  validation :   277,041 rows | frauds:   821 (0.296%)
+  test       :   554,082 rows | frauds: 1,643 (0.297%)
+  (train 70% / validation 10% / test 20%)
+
+==========================================================================================
+5. FEATURE SCALING
+==========================================================================================
+  signed log1p on monetary columns, then StandardScaler on continuous columns
+  (scaler fitted on the training split only - no leakage)
+
+==========================================================================================
+6. MODEL 1 - ISOLATION FOREST (anomaly detection)
+==========================================================================================
+  n_estimators=200, max_samples=256, contamination=0.00296
+  trained in 20.9s
+
+  Isolation Forest
+    threshold tuned on validation set (max F1): 0.700314  (val F1 = 0.6275)
+    test-set results:
+      Accuracy  : 0.998475
+      Precision : 0.978417
+      Recall    : 0.496652
+      F1-score  : 0.658862
+      AUC-ROC   : 0.957594
+      PR-AUC    : 0.518295
+      MAE       : 0.001525
+      MSE       : 0.001525
+      RMSE      : 0.039052
+      R2        : 0.484167
+    confusion matrix [[TN, FP], [FN, TP]]:
+      [[552421, 18], [827, 816]]
+              precision    recall  f1-score   support
+
+  Legitimate     0.9985    1.0000    0.9992    552439
+       Fraud     0.9784    0.4967    0.6589      1643
+
+    accuracy                         0.9985    554082
+   macro avg     0.9885    0.7483    0.8290    554082
+weighted avg     0.9984    0.9985    0.9982    554082
+
+
+==========================================================================================
+7. MODEL 2 - AUTOENCODER (anomaly detection via reconstruction error)
+==========================================================================================
+  training on 1,740,183 legitimate transactions (193,354 held out for early stopping)
+    Model: "autoencoder"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ dense (Dense)                   │ (None, 16)             │           192 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_1 (Dense)                 │ (None, 8)              │           136 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_2 (Dense)                 │ (None, 4)              │            36 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_3 (Dense)                 │ (None, 8)              │            40 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_4 (Dense)                 │ (None, 16)             │           144 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_5 (Dense)                 │ (None, 11)             │           187 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 735 (2.87 KB)
+ Trainable params: 735 (2.87 KB)
+ Non-trainable params: 0 (0.00 B)
+
+Epoch 1/30
+850/850 - 3s - 3ms/step - loss: 0.3094 - val_loss: 0.0991
+Epoch 2/30
+850/850 - 3s - 3ms/step - loss: 0.0664 - val_loss: 0.0560
+Epoch 3/30
+850/850 - 2s - 3ms/step - loss: 0.0522 - val_loss: 0.0476
+Epoch 4/30
+850/850 - 2s - 3ms/step - loss: 0.0441 - val_loss: 0.0418
+Epoch 5/30
+850/850 - 2s - 2ms/step - loss: 0.0405 - val_loss: 0.0393
+Epoch 6/30
+850/850 - 3s - 3ms/step - loss: 0.0385 - val_loss: 0.0377
+Epoch 7/30
+850/850 - 2s - 3ms/step - loss: 0.0371 - val_loss: 0.0365
+Epoch 8/30
+850/850 - 2s - 3ms/step - loss: 0.0361 - val_loss: 0.0356
+Epoch 9/30
+850/850 - 2s - 2ms/step - loss: 0.0354 - val_loss: 0.0350
+Epoch 10/30
+850/850 - 3s - 3ms/step - loss: 0.0349 - val_loss: 0.0346
+Epoch 11/30
+850/850 - 3s - 3ms/step - loss: 0.0344 - val_loss: 0.0341
+Epoch 12/30
+850/850 - 2s - 3ms/step - loss: 0.0341 - val_loss: 0.0338
+Epoch 13/30
+850/850 - 3s - 3ms/step - loss: 0.0338 - val_loss: 0.0336
+Epoch 14/30
+850/850 - 3s - 3ms/step - loss: 0.0335 - val_loss: 0.0335
+Epoch 15/30
+850/850 - 3s - 3ms/step - loss: 0.0334 - val_loss: 0.0333
+Epoch 16/30
+850/850 - 3s - 3ms/step - loss: 0.0332 - val_loss: 0.0331
+Epoch 17/30
+850/850 - 2s - 3ms/step - loss: 0.0331 - val_loss: 0.0330
+Epoch 18/30
+850/850 - 3s - 3ms/step - loss: 0.0329 - val_loss: 0.0329
+Epoch 19/30
+850/850 - 3s - 3ms/step - loss: 0.0328 - val_loss: 0.0327
+Epoch 20/30
+850/850 - 2s - 3ms/step - loss: 0.0327 - val_loss: 0.0326
+Epoch 21/30
+850/850 - 2s - 2ms/step - loss: 0.0326 - val_loss: 0.0325
+Epoch 22/30
+850/850 - 3s - 3ms/step - loss: 0.0325 - val_loss: 0.0324
+Epoch 23/30
+850/850 - 2s - 3ms/step - loss: 0.0323 - val_loss: 0.0322
+Epoch 24/30
+850/850 - 3s - 3ms/step - loss: 0.0322 - val_loss: 0.0321
+Epoch 25/30
+850/850 - 3s - 3ms/step - loss: 0.0322 - val_loss: 0.0320
+Epoch 26/30
+850/850 - 2s - 3ms/step - loss: 0.0321 - val_loss: 0.0319
+Epoch 27/30
+850/850 - 3s - 3ms/step - loss: 0.0320 - val_loss: 0.0318
+Epoch 28/30
+850/850 - 2s - 3ms/step - loss: 0.0319 - val_loss: 0.0317
+Epoch 29/30
+850/850 - 3s - 3ms/step - loss: 0.0318 - val_loss: 0.0317
+Epoch 30/30
+850/850 - 2s - 3ms/step - loss: 0.0317 - val_loss: 0.0316
+  trained in 75.7s (30 epochs)
+
+  Autoencoder
+    threshold tuned on validation set (max F1): 0.768667  (val F1 = 0.8562)
+    test-set results:
+      Accuracy  : 0.999024
+      Precision : 0.782564
+      Recall    : 0.928789
+      F1-score  : 0.849429
+      AUC-ROC   : 0.999430
+      PR-AUC    : 0.923825
+      MAE       : 0.000976
+      MSE       : 0.000976
+      RMSE      : 0.031247
+      R2        : 0.669745
+    confusion matrix [[TN, FP], [FN, TP]]:
+      [[552015, 424], [117, 1526]]
+              precision    recall  f1-score   support
+
+  Legitimate     0.9998    0.9992    0.9995    552439
+       Fraud     0.7826    0.9288    0.8494      1643
+
+    accuracy                         0.9990    554082
+   macro avg     0.8912    0.9640    0.9245    554082
+weighted avg     0.9991    0.9990    0.9991    554082
+
+
+==========================================================================================
+8. MODEL 3 - SMOTE + RANDOM FOREST (supervised classification)
+==========================================================================================
+  class counts before resampling : legit=1,933,537, fraud=5,749
+  after under-sampling           : legit=57,490, fraud=5,749
+  after SMOTE-NC                 : legit=57,490, fraud=28,745
+  (resampling is applied to the TRAINING split only; validation/test stay untouched)
+  trained in 18.0s
+
+  SMOTE + Random Forest
+    threshold tuned on validation set (max F1): 0.965000  (val F1 = 0.9988)
+    test-set results:
+      Accuracy  : 0.999977
+      Precision : 1.000000
+      Recall    : 0.992088
+      F1-score  : 0.996028
+      AUC-ROC   : 0.999029
+      PR-AUC    : 0.998076
+      MAE       : 0.000023
+      MSE       : 0.000023
+      RMSE      : 0.004844
+      R2        : 0.992064
+    confusion matrix [[TN, FP], [FN, TP]]:
+      [[552439, 0], [13, 1630]]
+              precision    recall  f1-score   support
+
+  Legitimate     1.0000    1.0000    1.0000    552439
+       Fraud     1.0000    0.9921    0.9960      1643
+
+    accuracy                         1.0000    554082
+   macro avg     1.0000    0.9960    0.9980    554082
+weighted avg     1.0000    1.0000    1.0000    554082
+
+
+  saved results table -> /home/claude/fraud_detection/outputs/model_comparison.csv
+
+==========================================================================================
+9. EVALUATION PLOTS
+==========================================================================================
+  saved figure -> eval_01_roc_curves.png
+  saved figure -> eval_02_precision_recall_curves.png
+  saved figure -> eval_03_confusion_matrices.png
+  saved figure -> eval_04_model_comparison.png
+  saved figure -> eval_05_autoencoder_loss.png
+  saved figure -> eval_06_autoencoder_error_distribution.png
+  saved figure -> eval_07_feature_importance.png
+
+==========================================================================================
+FINAL MODEL COMPARISON (test set)
+==========================================================================================
+                Model  Accuracy  Precision   Recall  F1-score  AUC-ROC   PR-AUC      MAE      MSE     RMSE       R2
+     Isolation Forest  0.998475   0.978417 0.496652  0.658862 0.957594 0.518295 0.001525 0.001525 0.039052 0.484167
+          Autoencoder  0.999024   0.782564 0.928789  0.849429 0.999430 0.923825 0.000976 0.000976 0.031247 0.669745
+SMOTE + Random Forest  0.999977   1.000000 0.992088  0.996028 0.999029 0.998076 0.000023 0.000023 0.004844 0.992064
+
+  Best F1-score : SMOTE + Random Forest
+  Best AUC-ROC  : Autoencoder
+
+  Note: the data is extremely imbalanced, so accuracy (and MAE / MSE / R2 computed on 0/1
+  predictions) look excellent even for weak models. Rely on F1-score, Precision/Recall,
+  AUC-ROC and PR-AUC to judge fraud-detection quality.
+
+Done. Total runtime: 2.6 minutes
+Outputs saved in: /home/claude/fraud_detection/outputs
